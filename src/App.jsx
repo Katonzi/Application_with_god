@@ -1,6 +1,6 @@
 import { useState, useContext } from 'react';
 
-import { AuthContext } from './context/AuthContext';
+import { AuthContext } from '../src/context/authContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Home from './pages/Home';
