@@ -1,0 +1,590 @@
+/* =========================================================
+   1. SYSTÈME DE VARIABLES DYNAMIQUES (MODE CLAIR PAR DÉFAUT)
+   ========================================================= */
+:root {
+    --primary-god: #1a2a6c;
+    --gradient-god: linear-gradient(135deg, #1a2a6c, #2f80ed);
+    
+    /* Variables de thèmes ajustables */
+    --bg-global: #f0f2f5;        /* Fond gris clair style Facebook */
+    --bg-card: #ffffff;          /* Fond des éléments blanc */
+    --text-main: #1c1e21;        /* Texte principal sombre */
+    --text-muted: #65676b;       /* Texte secondaire gris */
+    --border-color: #e4e6eb;     /* Lignes de séparation */
+    --bg-hover: rgba(0, 0, 0, 0.04);
+}
+
+/* =========================================================
+   2. BASCULE DU THEME SOMBRE (S'ACTIVE SUR LE BODY VIA JS)
+   ========================================================= */
+body.dark-theme {
+    --bg-global: #0f172a;        /* Fond bleu nuit très sombre (Slate 900) */
+    --bg-card: #1e293b;          /* Fond des cartes un peu plus clair (Slate 800) */
+    --text-main: #f1f5f9;        /* Texte principal blanc pur lumineux (Slate 100) */
+    --text-muted: #94a3b8;       /* Texte secondaire gris clair lisible (Slate 400) */
+    --border-color: #334155;     /* Lignes de séparation sombres (Slate 700) */
+    --bg-hover: rgba(255, 255, 255, 0.06);
+}
+
+/* =========================================================
+   3. STRUCTURES ET LOGIQUE D'APPLICATION DES THEMES
+   ========================================================= */
+.home-layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: var(--bg-global) !important;
+    transition: background-color 0.3s ease;
+}
+
+/* Forcer l'application du thème sur le header, la nav et les éléments enfants */
+.home-header, .home-nav-tabs, .bg-white {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Forçage de lisibilité des textes personnalisés et natifs */
+.text-dark-custom, 
+body.dark-theme .text-dark, 
+body.dark-theme h3, 
+body.dark-theme p {
+    color: var(--text-main) !important;
+    transition: color 0.3s ease;
+}
+
+.text-muted, 
+body.dark-theme .text-muted {
+    color: var(--text-muted) !important;
+    transition: color 0.3s ease;
+}
+
+/* =========================================================
+   4. SPLASH SCREEN & EFFET DE FRAPPE
+   ========================================================= */
+.splash-screen {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+.splash-content { max-width: 450px; width: 100%; }
+
+.splash-logo-circle {
+    width: 90px;
+    height: 90px;
+    margin: 0 auto 20px auto;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: transparent;
+    animation: pulse 2s infinite ease-in-out;
+}
+
+.splash-custom-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.splash-divider { height: 2px; width: 60px; background-color: rgba(255, 255, 255, 0.4); margin: 0 auto; }
+
+.typewriter-text {
+    min-height: 60px;
+    display: inline-block;
+}
+
+.cursor {
+    font-weight: bold;
+    color: #ffffff;
+    margin-left: 2px;
+    animation: blink 0.7s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* =========================================================
+   5. HEADER & BARRE D'ONGLETS (STYLE FACEBOOK)
+   ========================================================= */
+.home-header {
+    height: 60px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.header-logo-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: transparent;
+}
+
+.header-custom-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.home-nav-tabs {
+    height: 50px;
+    position: sticky;
+    top: 0;
+    z-index: 90;
+}
+
+.nav-tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--text-muted) !important; /* Force la couleur de l'icône non active */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 3px solid transparent;
+}
+body.dark-theme, .bare-lateral {
+    color: var(--text-muted) !important;
+    background-color: var(--bg-card);
+}
+.nav-tab-btn.active {
+    color: var(--primary-god) !important;
+    border-bottom-color: var(--primary-god);
+}
+
+/* En mode sombre, l'icône active brille un peu plus en bleu clair pour le contraste */
+body.dark-theme .nav-tab-btn.active {
+    color: #38bdf8 !important; /* Bleu ciel lumineux */
+    border-bottom-color: #38bdf8;
+}
+
+.home-main-content {
+    max-width: 550px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* =========================================================
+   6. DESIGN DE L'ONGLET MENU SCREEN
+   ========================================================= */
+.menu-profile-card {
+    background-color: var(--bg-card) !important;
+}
+
+.menu-avatar-placeholder {
+    width: 45px;
+    height: 45px;
+    background: var(--gradient-god);
+    color: white;
+    font-weight: bold;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.menu-item-btn {
+    color: var(--text-main) !important;
+    transition: background-color 0.2s ease;
+}
+
+.menu-item-btn:hover {
+    background-color: var(--bg-hover) !important;
+}
+
+.border-bottom-gray {
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+.style-switch {
+    cursor: pointer;
+}
+
+.btn-logout-custom {
+    background-color: #fee2e2;
+    color: #dc2626;
+    transition: all 0.2s ease;
+}
+
+body.dark-theme .btn-logout-custom {
+    background-color: #451a1a;
+    color: #fca5a5;
+}
+
+/* =========================================================
+   7. RESPONSIVE GRANDS ÉCRANS (IMAGE DE FOND PC OPTIMISÉE)
+   ========================================================= */
+@media (min-width: 768px) {
+    body {
+        /* L'image de fond reste fixe sur grand écran */
+        background-image: linear-gradient(rgba(15, 23, 42, 0.4), rgba(15, 23, 42, 0.4)), 
+                          url('https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=1920&q=80');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }
+    
+    /* TRÈS IMPORTANT : Rend le conteneur global invisible sur PC pour laisser voir l'image de fond */
+    .home-layout { 
+        background-color: transparent !important; 
+    }
+    
+    /* Seul le téléphone au centre conserve sa couleur claire ou sombre opaque */
+    .home-header, .home-nav-tabs, .home-main-content, .menu-profile-card, .menu-screen-container > div {
+        max-width: 550px;
+        margin: 0 auto;
+        width: 100%;
+        background-color: var(--bg-card) !important;
+    }
+    
+    .home-header { border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
+    .home-nav-tabs { border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
+    .home-main-content { 
+        border-left: 1px solid var(--border-color); 
+        border-right: 1px solid var(--border-color); 
+        min-height: calc(100vh - 110px); 
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25); 
+    }
+}
+
+/* =========================================================
+   8. ANIMATIONS COMPLÈTES
+   ========================================================= */
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+.animated-fadeIn { animation: fadeIn 0.5s ease-out forwards; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+/* =========================================================
+   FORÇAGE DU LOOK PROFIL EXCLUSIF (ANTI-FACEBOOK CONFLITS)
+   ========================================================= */
+
+/* On force le conteneur du profil à rejeter le fond blanc Bootstrap standard */
+.menu-screen-container > div[style*="transparent"],
+.profile-screen-container {
+    background-color: transparent !important;
+}
+
+.btn-back-unique {
+    background-color: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    transition: all 0.2s ease;
+}
+.btn-back-unique:hover {
+    transform: translateX(-3px);
+    background-color: var(--bg-hover) !important;
+}
+
+.profile-tag-top {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted) !important;
+    background-color: var(--bg-hover) !important;
+    padding: 6px 14px;
+    border-radius: 20px;
+}
+
+.profile-avatar-wrapper {
+    position: relative;
+    width: 105px;
+    height: 105px;
+}
+
+.profile-avatar-circle-unique {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: var(--gradient-god);
+    padding: 4px;
+    overflow: hidden;
+}
+
+.profile-avatar-text-unique {
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-card) !important;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 38px;
+    font-weight: 800;
+    color: var(--text-main) !important;
+}
+
+.btn-camera-float {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none !important;
+    background-color: var(--text-main) !important;
+    color: var(--bg-card) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+.profile-name-unique {
+    font-size: 24px !important;
+    font-weight: 800 !important;
+    color: var(--text-main) !important;
+}
+
+.profile-badge-status {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #3b82f6 !important;
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    padding: 4px 14px;
+    border-radius: 30px;
+    width: fit-content;
+}
+
+.profile-bio-text {
+    font-size: 14px !important;
+    font-style: italic !important;
+    color: var(--text-muted) !important;
+}
+
+/* Grille de Foi (Indicateurs en boîtes modulaires) */
+.stat-box-unique {
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 16px !important;
+}
+.stat-number-unique { display: block; font-size: 22px !important; font-weight: 800 !important; color: var(--text-main) !important; }
+.stat-label-unique { display: block; font-size: 11px; cursor: pointer !important; font-weight: 600 !important; color: var(--text-muted) !important; text-transform: uppercase;  }
+
+/* Fiche d'informations */
+.info-card-unique {
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 16px !important;
+}
+.border-bottom-unique { border-bottom: 1px solid var(--border-color) !important; }
+.info-title-unique { display: block; font-size: 11px !important; font-weight: 600 !important; color: var(--text-muted) !important; text-transform: uppercase; }
+.info-value-unique { display: block; font-size: 14px !important; font-weight: 600 !important; color: var(--text-main) !important; }
+/* =========================================================
+   FORÇAGE DU MODE SOMBRE SPÉCIFIQUE SUR LES ÉCRANS MOBILES
+   ========================================================= */
+@media (max-width: 767px) {
+    /* Quand le thème sombre est actif sur mobile */
+    body.dark-theme .menu-screen-container,
+    body.dark-theme .profile-screen-container {
+        background-color: transparent !important;
+    }
+
+    /* Force le fond des blocs de menu sur mobile */
+    body.dark-theme .menu-profile-card,
+    body.dark-theme .menu-screen-container > div,
+    body.dark-theme .bg-white {
+        background-color: var(--bg-card) !important;
+        border-color: var(--border-color) !important;
+    }
+
+    /* Force la visibilité absolue de TOUS les textes de boutons et menus sur mobile */
+    body.dark-theme .menu-item-btn,
+    body.dark-theme .menu-item-btn span,
+    body.dark-theme .menu-profile-card h3,
+    body.dark-theme .style-profile-click h3,
+    body.dark-theme .fw-semibold {
+        color: var(--text-main) !important;
+    }
+
+    /* Force la visibilité des textes secondaires (ex: "Frère de la communauté") sur mobile */
+    body.dark-theme .menu-profile-card p,
+    body.dark-theme .style-profile-click p,
+    body.dark-theme .text-muted {
+        color: var(--text-muted) !important;
+    }
+
+    /* Aligne la couleur des icônes Lucide-React sur mobile pour qu'elles ne s'effacent pas */
+    body.dark-theme .menu-item-btn svg:not(.text-primary):not(.text-success):not(.text-warning):not(.text-info):not(.text-secondary) {
+        stroke: var(--text-main) !important;
+    }
+    
+    body.dark-theme .text-muted svg {
+        stroke: var(--text-muted) !important;
+    }
+      /* Cible le titre ou le nom de l'application dans le header en mode sombre */
+    body.dark-theme .home-header h1,
+    body.dark-theme .home-header h2,
+    body.dark-theme .home-header .navbar-brand,
+    body.dark-theme .home-header span {
+        color: var(--text-main) !important;
+        transition: color 0.3s ease;
+    }
+    
+    
+}
+/* --- DIALOGUE DE DÉCONNEXION ÉVOLUTIF & IMMERSIF --- */
+
+@keyframes menuScaleUp {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animated-scaleUp {
+  animation: menuScaleUp 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Version Mobile Plein Écran pour capturer l'attention */
+@media (max-width: 576px) {
+  .logout-modal-overlay {
+    background-color: #ffffff !important; /* Fond blanc opaque sur mobile */
+    backdrop-filter: none !important;
+  }
+
+  .logout-modal-card {
+    max-width: 100% !important;
+    height: 100% !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centrage vertical absolu */
+    box-shadow: none !important;
+    padding: 32px !important;
+  }
+}
+
+/* Règles d'agencement structurelles pour ProfileScreen */
+.profile-nav-spacer {
+    width: 40px;
+}
+
+.btn-back-unique {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+}
+
+.profile-history-title {
+    letter-spacing: 0.3px;
+}
+
+.profile-empty-card {
+    border-radius: 16px;
+}
+
+.profile-prayers-gap {
+    gap: 12px;
+}
+
+.profile-prayer-item {
+    border-radius: 16px;
+    gap: 10px;
+}
+
+.profile-text-break {
+    word-break: break-word;
+}
+
+.profile-stats-bar {
+    gap: 20px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Style dédié pour le Menu Contextuel Mobile-First (Trois Points) */
+.btn-context-menu {
+    transition: opacity 0.2s;
+}
+
+.btn-context-menu:active {
+    opacity: 0.5;
+}
+
+.profile-dropdown-menu {
+    right: 15px;
+    top: 35px;
+    z-index: 1050;
+    min-width: 120px;
+    background-color: var(--bs-body-bg, #ffffff); /* Compatible Thème sombre */
+}
+
+.profile-dropdown-menu .dropdown-item {
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.profile-dropdown-menu .dropdown-item:active {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+/* Bouton d'action "J'aime" cliquable */
+.btn-like-action {
+    background: transparent;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.btn-like-action:active {
+    transform: scale(0.9);
+}
+
+/* Structure de la Modale de Confirmation Dynamique */
+.custom-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4); /* Flou d'arrière-plan discret */
+    z-index: 2000;
+    backdrop-filter: blur(2px);
+}
+
+.custom-modal-card {
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.profile-modal-max {
+    max-width: 400px; /* Dimension parfaite pour le mobile-first */
+}
+
+/* Animation d'ouverture de la modale */
+@keyframes scaleUp {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.animated-scaleUp {
+    animation: scaleUp 0.15s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}

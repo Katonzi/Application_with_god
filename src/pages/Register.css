@@ -1,0 +1,332 @@
+/* Container global adapté au mobile */
+.register-container {
+    min-height: 100vh;
+    width: 100%;
+    overflow-x: hidden; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px; 
+    background: linear-gradient(135deg, rgba(26, 42, 108, 0.8), rgba(2, 38, 85, 0.386)), 
+                url('../assets/register.jpg') no-repeat center center/cover;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    box-sizing: border-box;
+    
+}
+
+.register-card {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 24px 20px; /* Plus compact sur mobile */
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 360px; /* S'adapte parfaitement aux petits écrans */
+    backdrop-filter: blur(20px);
+    box-sizing: border-box;
+}
+
+.register-card h2 {
+    color: #1a2a6c;
+    margin-bottom: 6px;
+    font-size: 22px;
+}
+
+.register-card p {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+/* Formulaire et Inputs */
+.form-group {
+    margin-bottom: 14px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    font-size: 11px;
+    color: #1a2a6c;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 15px; /* Évite le zoom auto forcé sur iOS (minimum 15px/16px) */
+    transition: border-color 0.3s ease;
+    box-sizing: border-box;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #2f80ed;
+}
+
+/* Zone Mot de passe */
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-wrapper input {
+    padding-right: 70px; /* Plus d'espace pour le bouton Masquer/Afficher tactile */
+}
+
+.toggle-password-btn {
+    position: absolute;
+    right: 8px;
+    background: none;
+    border: none;
+    color: #2f80ed;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 8px; /* Zone de clic plus grande pour les doigts sur mobile */
+}
+
+/* Boutons */
+.register-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(90deg, #1a2a6c, #2f80ed);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(47, 128, 237, 0.3);
+    transition: transform 0.2s ease;
+    margin-top: 10px;
+}
+
+.register-btn:active {
+    transform: scale(0.98);
+}
+
+/* Indicateur d'étapes */
+.step-indicator {
+    display: block;
+    text-align: right;
+    font-size: 12px;
+    color: #111145;
+    font-weight: bold;
+    margin-top: 12px;
+}
+
+/* --- Animation de transition (Optimisée pour Mobile sans glitch horizontal) --- */
+.animated-step {
+    animation: slideInRightMobile 0.35s ease-out forwards;
+}
+
+@keyframes slideInRightMobile {
+    from {
+        opacity: 0;
+        transform: translateX(30px); /* Distance réduite pour éviter le débordement écran */
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* --- Le Backdrop Plein Écran Ajusté pour Mobile --- */
+.success-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0; /* Utiliser top/left/right/bottom est plus sûr que 100vh sur les navigateurs mobiles */
+    background: rgba(26, 42, 108, 0.9); 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    z-index: 9999; 
+    backdrop-filter: blur(6px);
+}
+
+.success-modal {
+    background: white;
+    padding: 30px 20px;
+    border-radius: 16px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 320px;
+    text-align: center;
+    border-top: 5px solid #2e7d32;
+    box-sizing: border-box;
+}
+
+.success-modal h3 {
+    color: #2e7d32;
+    margin-bottom: 10px;
+    font-size: 20px;
+}
+
+.success-modal p {
+    color: #444;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.success-modal .countdown-number {
+    display: inline-block;
+    font-size: 24px;
+    font-weight: bold;
+    color: #1a2a6c;
+    margin-top: 12px;
+    background: #f0f4f8;
+    padding: 6px 16px;
+    border-radius: 20px;
+}
+/* Bloc récapitulatif pour l'étape 3 */
+.summary-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.summary-item {
+    margin-bottom: 10px;
+}
+
+.summary-item:last-child {
+    margin-bottom: 0;
+}
+
+.summary-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.summary-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-top: 2px;
+    word-break: break-all; /* Évite que les longs emails dépassent sur mobile */
+}
+
+/* Bouton Annuler */
+.cancel-btn {
+    width: 100%;
+    padding: 12px;
+    background: none;
+    border: 2px solid #e2e8f0;
+    color: #64748b;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 10px;
+}
+
+.cancel-btn:active {
+    background: #f1f5f9;
+}
+/* --- Boîte de confirmation d'annulation (Backdrop et Modal) --- */
+.cancel-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    z-index: 9998;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s ease forwards;
+}
+
+.cancel-modal {
+    background: white;
+    padding: 24px 20px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 300px;
+    text-align: center;
+    animation: scaleUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.15) forwards;
+}
+
+.cancel-modal h4 {
+    margin: 0 0 10px 0;
+    color: #1a2a6c;
+    font-size: 18px;
+}
+
+.cancel-modal p {
+    color: #555;
+    font-size: 14px;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.cancel-modal-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.confirm-btn {
+    flex: 1;
+    padding: 12px;
+    background: #d32f2f;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.confirm-btn:active {
+    background: #b71c1c;
+}
+
+.reject-btn {
+    flex: 1;
+    padding: 12px;
+    background: #f1f5f9;
+    color: #1a2a6c;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.reject-btn:active {
+    background: #e2e8f0;
+}
+.password-hint {
+    font-size: 12px;
+    color: #e65100;
+    margin-top: 6px;
+    display: block;
+    font-weight: 500;
+    animation: fadeIn 0.2s ease forwards;
+}
+.dispotion-politique{
+    width: 100%;
+    display: flex;
+    gap: 12px;
+    position: relative;
+}

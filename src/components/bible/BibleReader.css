@@ -1,0 +1,288 @@
+/* --- CONFIGURATION DES THÈMES (VARIABLES CSS) --- */
+.bible-container.theme-light {
+  --bg-main: #f8f9fa;
+  --bg-card: #ffffff;
+  --bg-sidebar: #ffffff;
+  --bg-sidebar-hover: #f1f3f5;
+  --bg-sidebar-active: #f1f7ff;
+  --bg-input: #ffffff;
+  --text-main: #2b3035;
+  --text-muted: #6c757d;
+  --text-sidebar-active: #0d6efd;
+  --border-color: #dee2e6;
+  --card-shadow: rgba(0, 0, 0, 0.05);
+}
+
+.bible-container.theme-dark {
+  --bg-main: #1e293b;
+  --bg-card: #1e293b;
+  --bg-sidebar: #1e293b;
+  --bg-sidebar-hover: #1e293b;
+  --bg-sidebar-active: #2d3748;
+  --bg-input: #e2e8f0;
+  --text-input: black;
+  --text-main: #e2e8f0; 
+  --text-muted: #a0aec0;
+  --text-sidebar-active: #3b82f6;
+  --border-color: #2d2d2d;
+  --card-shadow: rgba(0, 0, 0, 0.3);
+}
+
+/* --- BASE & DESIGN MOBILE-FIRST --- */
+.bible-container {
+  display: flex;
+  height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  overflow: hidden;
+  position: relative;
+}
+.bible-container.theme.dark{
+  color: white;
+}
+
+/* BARRE LATÉRALE - OPAQUE ET FIXÉE */
+.bible-sidebar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100%;
+  background-color: var(--bg-sidebar) !important;
+  border-right: 1px solid var(--border-color) !important;
+  z-index: 1050;
+  transition: transform 0.3s ease;
+  transform: translateX(-100%);
+  display: flex;
+  flex-direction: column;
+}
+
+.bible-sidebar.open {
+  transform: translateX(0);
+}
+
+.bible-sidebar .p-3 {
+  background-color: var(--bg-sidebar) !important;
+  color: var(--text-main) !important;
+}
+
+.bible-sidebar h5 {
+  color: var(--text-main) !important;
+}
+
+.sidebar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 1040;
+}
+
+/* ZONE DE LECTURE PRINCIPALE */
+.bible-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.bible-top-bar {
+  min-height: 60px;
+  background-color: var(--bg-card) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+.hamburger-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  color: var(--text-muted) !important;
+  transition: all 0.2s ease;
+}
+
+.hamburger-btn:hover {
+  background-color: var(--bg-sidebar-hover);
+  color: #0d6efd;
+}
+.global-search-container {
+  max-width: 350px;
+  width: 100%;
+}
+
+.global-search-container .input-group {
+  border: 1px solid var(--border-color) !important;
+  background-color: var(--bg-input);
+  
+}
+
+/* PROTECTION CONTRE BOOTSTRAP : Force la couleur du texte saisi dans la barre de recherche */
+.global-search-container input,
+.global-search-container input.form-control,
+.global-search-container input:focus {
+  background-color: transparent !important;
+  color: var(--text-input) !important; 
+}
+
+/* Force la couleur du texte de recherche de la sidebar */
+.bible-sidebar input,
+.bible-sidebar input.form-control,
+.bible-sidebar input:focus {
+  background-color: var(--bg-input) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-input) !important;
+}
+
+/* ZONE DE CONTENU GLOBAL */
+.bible-content-wrapper {
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ÉCRAN DE BIENVENUE "HERO" */
+.bible-welcome-hero {
+  border-radius: 16px;
+  padding: 5rem 2rem;
+  margin-top: 2rem;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0d6efd, #0a3782);
+  color: #ffffff !important;
+  box-shadow: 0 10px 30px rgba(13, 110, 253, 0.15);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  z-index: 1;
+}
+
+.bible-welcome-hero h2, 
+.bible-welcome-hero p {
+  color: #ffffff !important;
+}
+
+.hero-bg-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+  opacity: 0.25;
+  mix-blend-mode: overlay;
+}
+
+/* ZONE PLEIN ÉCRAN POUR LES RÉSULTATS DE RECHERCHE */
+.full-screen-search-results {
+  background-color: var(--bg-card);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px var(--card-shadow);
+}
+
+.full-screen-search-results h4 {
+  color: var(--text-main) !important;
+}
+
+.search-result-item {
+  background-color: var(--bg-main) !important;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.search-result-item p {
+  color: var(--text-main) !important;
+}
+
+.search-result-item:hover {
+  background-color: var(--bg-sidebar-active) !important;
+  border-left-color: #0d6efd;
+  transform: translateX(2px);
+}
+
+/* GRILLE CHAPITRES */
+.chapters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
+}
+
+.chapters-grid .btn-outline-secondary {
+  color: var(--text-main);
+  border-color: var(--border-color);
+}
+
+.chapters-grid .btn-outline-secondary:hover {
+  background-color: var(--bg-sidebar-active);
+  color: var(--text-sidebar-active);
+}
+
+/* TYPOGRAPHIE DES VERSETS (Correction couleur en mode sombre) */
+.bible-text-area {
+  line-height: 1.65;
+  font-size: 1.15rem;
+  text-align: justify;
+  color: var(--text-main) !important; /* Force l'application de la couleur claire */
+  background-color: var(--bg-card) !important;
+  box-shadow: 0 4px 12px var(--card-shadow);
+}
+
+/* Assure que chaque conteneur de verset hérite de la bonne couleur */
+.verse-span {
+  margin-right: 8px;
+  display: inline;
+  color: var(--text-main) !important; 
+}
+
+.verse-number {
+  font-weight: 700;
+  color: #0d6efd;
+  margin-right: 4px;
+  font-size: 0.8rem;
+  vertical-align: super;
+}
+
+/* Style pour la surbrillance du mot-clé recherché */
+.highlight-orange {
+  background-color: #ffe8cc; 
+  color: #d9480f;            
+  padding: 0 2px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+/* Éléments de la liste latérale */
+.bible-sidebar .list-group-item {
+  background-color: transparent;
+  color: var(--text-muted);
+  border: 0;
+}
+
+.bible-sidebar .list-group-item:hover {
+  background-color: var(--bg-sidebar-hover);
+  color: var(--text-main);
+}
+
+.bible-sidebar .list-group-item.active {
+  background-color: var(--bg-sidebar-active) !important;
+  color: var(--text-sidebar-active) !important;
+  font-weight: bold;
+}
+
+/* --- ADAPTATION GRAND ÉCRAN (PC) --- */
+@media (min-width: 992px) {
+  .bible-sidebar {
+    position: relative;
+    transform: translateX(0);
+  }
+  .bible-sidebar.closed {
+    display: none;
+  }
+  .sidebar-overlay {
+    display: none;
+  }
+}

@@ -1,0 +1,345 @@
+/* ==========================================
+   0. CONTENEUR GLOBAL ENVELOPPANT
+   ========================================== */
+.spiritual-main-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+/* ==========================================
+   1. BLOC LE VERSET DU JOUR (MAGNIFIQUE EN CLAIR COMME EN SOMBRE)
+   ========================================== */
+.spiritual-verse-container {
+    position: relative;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.88) 0%, rgba(79, 70, 229, 0.93) 50%, rgba(30, 27, 75, 0.96) 100%),
+                url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgMjAwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBvcGFjaXR5PSIwLjE1Ij4KICAgIDxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9Im5vbmUiLz4KICAgIDxwYXRoIGQ9Ik0wLDE1MCBRMTAwLDEwMCAyMDAsMTUwIFQ0MDAsMTUwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMS41Ii8+CiAgICA8cGF0aCBkPSJNMiwxNzAgUTEyMCwxMzAgMjQwLDE3MCBUNDAwLDE3MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjEiLz4KPC9zdmc+");
+    background-size: cover;
+    background-position: center;
+    border-radius: 24px;
+    padding: 22px;
+    margin: 12px 16px 24px 16px;
+    box-shadow: 0 10px 25px rgba(79, 70, 229, 0.2);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-sizing: border-box;
+}
+
+.spiritual-watermark {
+    position: absolute;
+    bottom: -20px;
+    right: 10px;
+    font-size: 90px;
+    color: rgba(255, 255, 255, 0.04);
+    font-family: serif;
+    user-select: none;
+    pointer-events: none;
+}
+
+.spiritual-verse-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    z-index: 2;
+}
+
+.spiritual-badge {
+    font-size: 10px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.18);
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.spiritual-audio-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.spiritual-audio-btn:active {
+    transform: scale(0.92);
+}
+
+.spiritual-audio-btn.playing {
+    background: #ef4444;
+    border-color: #ef4444;
+    animation: pulse 2s infinite;
+}
+
+.spiritual-verse-content {
+    font-family: 'Georgia', serif;
+    font-size: 16px;
+    line-height: 1.6;
+    color: #ffffff;
+    font-style: italic;
+    font-weight: 500;
+    width: 100%;
+    margin: 8px 0;
+    z-index: 2;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.spiritual-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50%;
+    margin: 16px 0;
+    gap: 8px;
+    z-index: 2;
+}
+
+.spiritual-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0));
+}
+
+.spiritual-dot {
+    width: 4px;
+    height: 4px;
+    background-color: #ffffff;
+    border-radius: 50%;
+}
+
+.spiritual-verse-footer {
+    z-index: 2;
+}
+
+.spiritual-reference {
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* ==========================================
+   2. INTERFACE INFERIEURE (PAR DÉFAUT : MODE CLAIR)
+   ========================================== */
+.home-content-feed {
+    padding: 0 16px 30px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    box-sizing: border-box;
+}
+
+.daily-challenge-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 20px;
+    padding: 18px;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.02);
+    transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.challenge-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 800;
+    color: #4f46e5;
+    background: #e0e7ff;
+    padding: 4px 10px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+.challenge-text {
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: #334155;
+    margin: 0;
+    transition: color 0.3s ease;
+}
+
+.section-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 12px 0;
+    text-align: left;
+    transition: color 0.3s ease;
+}
+
+.topics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.topic-chip {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 12px 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.topic-chip:active {
+    background: #4f46e5;
+    color: #ffffff;
+    border-color: #4f46e5;
+    transform: scale(0.96);
+}
+
+.quick-actions-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+.action-box {
+    flex: 1;
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 16px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.01);
+    transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.action-icon {
+    font-size: 20px;
+}
+
+.action-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    transition: color 0.3s ease;
+}
+
+/* ==========================================
+   3. MODE SOMBRE INJECTÉ PAR LOCALSTORAGE
+   ========================================== */
+.spiritual-main-wrapper.dark .daily-challenge-card {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.spiritual-main-wrapper.dark .challenge-badge {
+    color: #a5b4fc;
+    background: rgba(165, 180, 252, 0.15);
+}
+
+.spiritual-main-wrapper.dark .challenge-text {
+    color: #cbd5e1;
+}
+
+.spiritual-main-wrapper.dark .section-title {
+    color: #f1f5f9;
+}
+
+.spiritual-main-wrapper.dark .topic-chip {
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+.spiritual-main-wrapper.dark .topic-chip:active {
+    background: #6366f1;
+    color: #ffffff;
+    border-color: #6366f1;
+}
+
+.spiritual-main-wrapper.dark .action-box {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+}
+
+.spiritual-main-wrapper.dark .action-label {
+    color: #cbd5e1;
+}
+
+/* ==========================================
+   4. AJUSTEMENT PROPRE TABLETTE / PC (RESPONSIVE)
+   ========================================== */
+@media (min-width: 768px) {
+    .spiritual-verse-container {
+        margin: 0px 0px 24px 0px;
+        padding: 26px;
+    }
+    .spiritual-verse-content {
+        font-size: 18px;
+    }
+    .home-content-feed {
+        padding: 0px 0px 30px 0px;
+    }
+}
+
+/* ==========================================
+   5. UTILITAIRES ET ANIMATIONS
+   ========================================== */
+.spiritual-loader-container {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 20px;
+    padding: 24px;
+    margin: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #64748b;
+    transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+.spiritual-loader-container.dark {
+    background: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+.spiritual-spin {
+    animation: spin 1.2s linear infinite;
+    color: #6366f1;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+    70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
