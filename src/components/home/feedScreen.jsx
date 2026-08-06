@@ -1,8 +1,8 @@
 import { useState, useEffect, useContext, useMemo } from 'react';
-import { AuthContext } from '../../context/AuthContext'; 
+import { AuthContext } from '../../context/authContext'; 
 import { authApi } from '../../api/authApi';
 import { Search, Send, Heart, MessageCircle, Share2, Sparkles, Loader2, ChevronDown, ChevronUp, Clock } from 'lucide-react';
-import './FeedScreen.css';
+import './feedScreen.css';
 
 function FeedScreen() {
     const { user, token } = useContext(AuthContext);
