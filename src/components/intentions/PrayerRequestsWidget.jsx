@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { AuthContext } from '../../context/AuthContext';
+import { AuthContext } from '../../context/authContext';
 import { authApi } from '../../api/authApi';
 import { Loader2, Plus, Calendar, Heart, MessageCircle, ArrowLeft } from 'lucide-react';
 import './PrayerRequestsWidget.css';

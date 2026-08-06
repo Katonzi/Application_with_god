@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { AuthContext } from '../../context/AuthContext';
+import { AuthContext } from '../../context/authContext';
 import { authApi } from '../../api/authApi';
 import { ArrowLeft, Heart, MessageCircle, Share2, MoreVertical, Edit2, Trash2, X, Mail, Calendar, Award, Camera, ChevronDown, ChevronUp, Clock, Loader2, Send } from 'lucide-react';
 
