@@ -270,10 +270,6 @@ function Register({ onNavigateToLogin }) {
                             </div>
                         </div>
 
-                                <div className='dispotion-politique'>
-                                    <p><input type="checkbox" name="politique" id="politique" /> Accepter nos <a href="#">politiques de confidentialité</a>
-                                    </p> 
-                                </div>
                         <button 
                             type="button" 
                             className="register-btn"
