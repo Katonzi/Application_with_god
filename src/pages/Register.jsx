@@ -138,7 +138,7 @@ function Register({ onNavigateToLogin }) {
             )}
 
             <div className="register-card">
-                <h2>With God 🕊️</h2>
+                <h2>WithGod 🕊️</h2>
                 
                 {!success && (
                     <p>

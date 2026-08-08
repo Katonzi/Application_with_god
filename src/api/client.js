@@ -1,8 +1,11 @@
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost/with_god_api";
+
+
 // On crée une instance Axios pointant vers le backend Node.js
 const apiClient = axios.create({
-    baseURL: 'http://localhost:5000/api/with-god', 
+    baseURL: API_URL, 
     headers: {
         'Content-Type': 'application/json'
     }

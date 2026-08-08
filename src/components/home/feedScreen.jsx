@@ -442,7 +442,7 @@ function FeedScreen() {
                 </div>
             ) : filteredPrayers.length === 0 ? (
                 <div className="text-center py-5 rounded-4 shadow-sm p-4 prayer-feed-card">
-                    <p className="text-danger m-0 fs-7">Aucune intention de prière dans le fil d'actualité. Vérifier votre connexion internet</p>
+                    <p className="text-danger m-0 fs-7">Aucune intention de prière dans le fil d'actualité. ou rassurrez-vous d'être connecté sur internet.</p>
                 </div>
             ) : (
                 <div className="prayers-feed-list d-flex flex-column gap-3">

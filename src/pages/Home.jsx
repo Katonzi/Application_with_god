@@ -60,7 +60,7 @@ function Home() {
                     
                     {/* Sur affichage mobile, tout le reste en dessous du logo est masqué (d-none d-md-block) */}
                     <div className="d-none d-md-block">
-                        <h2 className="display-6 fw-bold mb-3">WITH GOD</h2>
+                        <h2 className="display-6 fw-bold mb-3">WITHGOD</h2>
                         <div className="splash-divider my-4"></div>
                         
                         <p className="fst-italic fs-5 lh-base px-2 typewriter-text">
@@ -90,7 +90,7 @@ function Home() {
                         <div className="header-logo-circle me-2">
                             <img src={myLogo} alt="Logo With God" className="header-custom-logo" />
                         </div>
-                        <h1 className="m-0 fs-4 fw-bold text-primary-god logo-text">With God</h1>
+                        <h1 className="m-0 fs-4 fw-bold text-primary-god logo-text">WithGod</h1>
                     </div>
 
                     {/* Zone de recherche non fonctionnelle pour l'instant */}
@@ -125,7 +125,7 @@ function Home() {
                                     className="header-custom-logo" 
                                 />
                             </div>
-                            <h1 className="m-0 fs-4 fw-bold text-primary-god logo-text">With God</h1>
+                            <h1 className="m-0 fs-4 fw-bold text-primary-god logo-text">WithGod</h1>
                         </div>
                     </header>
 
