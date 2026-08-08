@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost/with_god_api"; 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/with-god"; 
 
 
 // On crée une instance Axios pointant vers le backend Node.js
