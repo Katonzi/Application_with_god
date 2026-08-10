@@ -4,6 +4,8 @@ import { authApi } from '../../api/authApi';
 import apiClient from '../../api/client';
 import './ChatWindow.css';
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/with-god"
+
 const decodeJwt = (token) => {
     try {
         if (!token) return null;
@@ -90,7 +92,7 @@ const ChatWindow = () => {
     }, [activeContact, token]);
 
     useEffect(() => {
-        socketRef.current = io("http://localhost:5000");               
+        socketRef.current = io(API_URL);               
 
         if (myId) {
             socketRef.current.emit('join_global_inbox', { userId: myId });
