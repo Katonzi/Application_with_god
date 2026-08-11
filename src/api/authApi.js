@@ -232,18 +232,19 @@ getMessages: async (token, conversationId) => {
     }
 },
 //La récuperation des tous les messages des utilisateur toute conversation confondues.
-getAllUserMessages:async(token)=>{
-   try{
-     const response = await apiClient.get(`/chats/all-messages`, {
-        headers:{
-            Authorization:`Baerer ${token}`
-        }
-    });
-    return response.data;
-   }catch(err){
-    console.error("Une erreur s'est produite...", err);
-   }
+getAllUserMessages: async (token) => {
+    try {
+        const response = await apiClient.get(`/chats/all-messages`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
 
+        return response.data;
+    } catch (err) {
+        console.error("Une erreur s'est produite...", err);
+        throw err;
+    }
 },
 
 // Vos fonctions pour les notifications dans authApi.js

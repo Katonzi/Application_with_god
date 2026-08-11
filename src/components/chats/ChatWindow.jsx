@@ -1,45 +1,44 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { io } from 'socket.io-client';
 import { authApi } from '../../api/authApi';
 import apiClient from '../../api/client';
 import './ChatWindow.css';
 
-// URL de l'API REST
+// ============================================================
+// URL DE L'API REST
+// ============================================================
+
 const API_URL =
     import.meta.env.VITE_API_WEBSOCKET ||
     "http://localhost:5000";
 
-// URL dédiée à Socket.IO
-// En production : https://backend-with-god.onrender.com
-// En local : http://localhost:5000
+// ============================================================
+// URL SOCKET.IO
+// ============================================================
+
 const SOCKET_URL =
     import.meta.env.VITE_SOCKET_URL ||
     (API_URL.includes('/api/with-god')
         ? API_URL.replace(/\/api\/with-god\/?$/, '')
         : API_URL);
 
+// ============================================================
+// DÉCODAGE JWT
+// ============================================================
+
 const decodeJwt = (token) => {
     try {
         if (!token) return null;
 
         const base64Url = token.split('.')[1];
-
         if (!base64Url) return null;
 
-        const base64 = base64Url
-            .replace(/-/g, '+')
-            .replace(/_/g, '/');
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
 
         const jsonPayload = decodeURIComponent(
-            window.atob(base64)
-                .split('')
-                .map(
-                    (c) =>
-                        '%' +
-                        ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-                )
-                .join('')
+            window.atob(base64).split('').map((c) =>
+                '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+            ).join('')
         );
 
         return JSON.parse(jsonPayload);
@@ -49,23 +48,27 @@ const decodeJwt = (token) => {
     }
 };
 
+// ============================================================
+// COMPOSANT
+// ============================================================
+
 const ChatWindow = () => {
     const [recentChats, setRecentChats] = useState([]);
+    const [activeContact, setActiveContact] = useState(null);
+    const [conversationId, setConversationId] = useState(null);
+    const [chatHistory, setChatHistory] = useState([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
+    const [isChatOpen, setIsChatOpen] = useState(false);
+
     const [searchResults, setSearchResults] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchError, setSearchError] = useState('');
     const [loadingSearch, setLoadingSearch] = useState(false);
 
-    const [activeContact, setActiveContact] = useState(null);
-    const [isChatOpen, setIsChatOpen] = useState(false);
-    const [conversationId, setConversationId] = useState(null);
-    const [chatHistory, setChatHistory] = useState([]);
-    const [loadingHistory, setLoadingHistory] = useState(false);
     const [typedMessage, setTypedMessage] = useState('');
+    const [isOtherTyping, setIsOtherTyping] = useState(false);
 
     const [onlineUsers, setOnlineUsers] = useState([]);
-    const [isOtherTyping, setIsOtherTyping] = useState(false);
-    const typingTimeoutRef = useRef(null);
 
     const [globalMessages, setGlobalMessages] = useState([]);
     const [loadingGlobal, setLoadingGlobal] = useState(false);
@@ -73,6 +76,10 @@ const ChatWindow = () => {
     const socketRef = useRef(null);
     const messagesEndRef = useRef(null);
     const textareaRef = useRef(null);
+    const typingTimeoutRef = useRef(null);
+
+    const activeContactRef = useRef(null);
+    const conversationIdRef = useRef(null);
 
     const token = localStorage.getItem('token');
 
@@ -82,6 +89,72 @@ const ChatWindow = () => {
     );
 
     const myId = currentUser?.id || currentUser?.userId;
+
+    // ========================================================
+    // REFS SYNCHRONISÉES
+    // ========================================================
+
+    useEffect(() => {
+        activeContactRef.current = activeContact;
+    }, [activeContact]);
+
+    useEffect(() => {
+        conversationIdRef.current = conversationId;
+    }, [conversationId]);
+
+    // ========================================================
+    // NORMALISATION D'UN MESSAGE
+    // ========================================================
+
+    /*
+     * Cette fonction garantit que tous les messages reçus
+     * possèdent les mêmes propriétés côté React.
+     *
+     * Le backend fournit normalement :
+     * sender_id
+     * sender_name
+     * text
+     * created_at
+     *
+     * Mais on ajoute plusieurs fallback pour éviter qu'un
+     * message reçu en temps réel perde le nom de son expéditeur.
+     */
+
+    const normalizeMessage = (message) => {
+        if (!message) return null;
+
+        const senderId =
+            message.sender_id ||
+            message.senderId;
+
+        let senderName =
+            message.sender_name ||
+            message.senderName ||
+            message.sender_username ||
+            message.username;
+
+        if (!senderName && Number(senderId) === Number(myId)) {
+            senderName = "Moi";
+        }
+
+        if (
+            !senderName &&
+            activeContactRef.current &&
+            Number(senderId) === Number(activeContactRef.current.id)
+        ) {
+            senderName = activeContactRef.current.username;
+        }
+
+        return {
+            ...message,
+            sender_id: senderId,
+            sender_name: senderName || `Utilisateur #${senderId}`
+        };
+    };
+
+    // ========================================================
+    // SCROLL
+    // ========================================================
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({
@@ -101,32 +174,30 @@ const ChatWindow = () => {
         isOtherTyping
     ]);
 
-    // =========================================================
+    // ========================================================
     // CHARGEMENT DES DISCUSSIONS RÉCENTES
-    // =========================================================
+    // ========================================================
 
     useEffect(() => {
-        if (myId) {
-            const storedChats = localStorage.getItem(
-                `chats_${myId}`
-            );
+        if (!myId) return;
 
-            if (storedChats) {
-                try {
-                    setRecentChats(JSON.parse(storedChats));
-                } catch (error) {
-                    console.error(
-                        "Erreur lors de la lecture des discussions locales :",
-                        error
-                    );
-                }
-            }
+        const storedChats = localStorage.getItem(`chats_${myId}`);
+
+        if (!storedChats) return;
+
+        try {
+            setRecentChats(JSON.parse(storedChats));
+        } catch (error) {
+            console.error(
+                "Erreur lors de la lecture des discussions locales :",
+                error
+            );
         }
     }, [myId]);
 
-    // =========================================================
-    // CHARGEMENT DE LA BOÎTE GLOBALE
-    // =========================================================
+    // ========================================================
+    // CHARGEMENT DU FLUX GLOBAL
+    // ========================================================
 
     useEffect(() => {
         const fetchGlobalInbox = async () => {
@@ -137,14 +208,22 @@ const ChatWindow = () => {
             try {
                 const res = await authApi.getAllUserMessages(token);
 
-                if (res.success) {
-                    setGlobalMessages(res.data || []);
+                if (res?.success) {
+                    const messages = Array.isArray(res.data)
+                        ? res.data.map(normalizeMessage)
+                        : [];
+
+                    setGlobalMessages(messages);
+                } else {
+                    setGlobalMessages([]);
                 }
             } catch (error) {
                 console.error(
                     "Erreur lors du chargement de la boîte globale :",
                     error
                 );
+
+                setGlobalMessages([]);
             } finally {
                 setLoadingGlobal(false);
             }
@@ -155,33 +234,18 @@ const ChatWindow = () => {
         }
     }, [activeContact, token]);
 
-    // =========================================================
-    // INITIALISATION UNIQUE DE SOCKET.IO
-    // =========================================================
+    // ========================================================
+    // INITIALISATION SOCKET.IO
+    // ========================================================
 
     useEffect(() => {
-        if (!myId) {
-            return;
-        }
+        if (!myId) return;
 
         console.log(
             "🔌 Initialisation Socket.IO vers :",
             SOCKET_URL
         );
 
-        /*
-         * IMPORTANT :
-         *
-         * On utilise directement WebSocket.
-         *
-         * Socket.IO utilise normalement :
-         *   1. polling
-         *   2. puis upgrade vers websocket
-         *
-         * Ici, on évite cette phase de polling afin de ne pas
-         * avoir de problème de session/sid lors du passage
-         * vers WebSocket sur Render.
-         */
         const socket = io(SOCKET_URL, {
             transports: ['websocket'],
             upgrade: false,
@@ -194,28 +258,30 @@ const ChatWindow = () => {
 
         socketRef.current = socket;
 
-        // -----------------------------------------------------
+        // ====================================================
         // CONNEXION
-        // -----------------------------------------------------
+        // ====================================================
 
         const handleConnect = () => {
-            console.log(
-                `✅ Socket.IO connecté : ${socket.id}`
-            );
+            console.log(`✅ Socket.IO connecté : ${socket.id}`);
 
-            /*
-             * IMPORTANT :
-             * On rejoint la boîte globale seulement APRÈS
-             * que Socket.IO soit réellement connecté.
-             */
             socket.emit('join_global_inbox', {
                 userId: myId
             });
+
+            const currentConversationId =
+                conversationIdRef.current;
+
+            if (currentConversationId) {
+                socket.emit('join_conversation', {
+                    conversationId: currentConversationId
+                });
+            }
         };
 
-        // -----------------------------------------------------
-        // ERREUR DE CONNEXION
-        // -----------------------------------------------------
+        // ====================================================
+        // ERREUR
+        // ====================================================
 
         const handleConnectError = (error) => {
             console.error(
@@ -229,9 +295,9 @@ const ChatWindow = () => {
             );
         };
 
-        // -----------------------------------------------------
+        // ====================================================
         // DÉCONNEXION
-        // -----------------------------------------------------
+        // ====================================================
 
         const handleDisconnect = (reason) => {
             console.warn(
@@ -240,9 +306,9 @@ const ChatWindow = () => {
             );
         };
 
-        // -----------------------------------------------------
+        // ====================================================
         // RECONNEXION
-        // -----------------------------------------------------
+        // ====================================================
 
         const handleReconnectAttempt = (attempt) => {
             console.log(
@@ -250,11 +316,15 @@ const ChatWindow = () => {
             );
         };
 
-        // -----------------------------------------------------
-        // RÉCEPTION D'UN MESSAGE
-        // -----------------------------------------------------
+        // ====================================================
+        // TRAITEMENT MESSAGE PRIVÉ
+        // ====================================================
 
-        const handleReceiveMessage = (newMessage) => {
+        const processPrivateMessage = (rawMessage) => {
+            const newMessage = normalizeMessage(rawMessage);
+
+            if (!newMessage) return;
+
             const currentConvId =
                 newMessage.conversation_id ||
                 newMessage.conversationId;
@@ -263,13 +333,15 @@ const ChatWindow = () => {
                 newMessage.sender_id ||
                 newMessage.senderId;
 
-            // -------------------------------------------------
-            // MESSAGE DANS LA CONVERSATION ACTIVE
-            // -------------------------------------------------
+            const currentConversationId =
+                conversationIdRef.current;
+
+            const currentContact =
+                activeContactRef.current;
 
             if (
-                activeContact &&
-                Number(currentConvId) === Number(conversationId)
+                currentContact &&
+                Number(currentConvId) === Number(currentConversationId)
             ) {
                 setChatHistory((prev) => {
                     if (
@@ -286,37 +358,50 @@ const ChatWindow = () => {
                         ...prev,
                         {
                             ...newMessage,
-                            status: 'read'
+                            status:
+                                newMessage.status ||
+                                'read'
                         }
                     ];
                 });
 
-                if (socket.connected) {
+                if (
+                    socket.connected &&
+                    Number(senderId) !== Number(myId)
+                ) {
                     socket.emit('message_read', {
                         messageId: newMessage.id,
-                        conversationId: conversationId,
+                        conversationId: currentConversationId,
                         readerId: myId
                     });
                 }
-            } else {
-                setChatHistory((prev) => {
-                    if (
-                        prev.some(
-                            (msg) =>
-                                Number(msg.id) ===
-                                Number(newMessage.id)
-                        )
-                    ) {
-                        return prev;
-                    }
-
-                    return [...prev, newMessage];
-                });
             }
+        };
 
-            // -------------------------------------------------
-            // MISE À JOUR DU FLUX GLOBAL
-            // -------------------------------------------------
+        // ====================================================
+        // RÉCEPTION MESSAGE
+        // ====================================================
+
+        const handleReceiveMessage = (rawMessage) => {
+            console.log(
+                "📨 Message reçu :",
+                rawMessage
+            );
+
+            const newMessage =
+                normalizeMessage(rawMessage);
+
+            if (!newMessage) return;
+
+            // -----------------------------------------------
+            // CONVERSATION PRIVÉE
+            // -----------------------------------------------
+
+            processPrivateMessage(newMessage);
+
+            // -----------------------------------------------
+            // FLUX GLOBAL
+            // -----------------------------------------------
 
             setGlobalMessages((prev) => {
                 if (
@@ -329,26 +414,48 @@ const ChatWindow = () => {
                     return prev;
                 }
 
-                return [...prev, newMessage];
+                /*
+                 * IMPORTANT :
+                 * On ajoute le nouveau message À LA FIN.
+                 *
+                 * Le backend renvoie les anciens messages
+                 * dans l'ordre ASC et le nouveau message
+                 * arrive ici après son INSERT.
+                 *
+                 * Le dernier message est donc le plus récent.
+                 */
+
+                return [
+                    ...prev,
+                    newMessage
+                ];
             });
 
-            // -------------------------------------------------
-            // MISE À JOUR DES DISCUSSIONS RÉCENTES
-            // -------------------------------------------------
+            // -----------------------------------------------
+            // DISCUSSIONS RÉCENTES
+            // -----------------------------------------------
+
+            const senderId =
+                newMessage.sender_id ||
+                newMessage.senderId;
 
             setRecentChats((prev) => {
                 let contactToMove = prev.find(
                     (c) =>
-                        Number(c.id) === Number(senderId)
+                        Number(c.id) ===
+                        Number(senderId)
                 );
+
+                const currentContact =
+                    activeContactRef.current;
 
                 if (
                     !contactToMove &&
-                    activeContact &&
-                    Number(activeContact.id) ===
+                    currentContact &&
+                    Number(currentContact.id) ===
                         Number(senderId)
                 ) {
-                    contactToMove = activeContact;
+                    contactToMove = currentContact;
                 }
 
                 if (!contactToMove) {
@@ -377,81 +484,139 @@ const ChatWindow = () => {
             });
         };
 
-        // -----------------------------------------------------
+        // ====================================================
+        // RÉCEPTION FLUX GLOBAL
+        // ====================================================
+
+        const handleReceiveGlobalMessage = (rawMessage) => {
+            console.log(
+                "🌍 Nouveau message dans le flux global :",
+                rawMessage
+            );
+
+            const newMessage =
+                normalizeMessage(rawMessage);
+
+            if (!newMessage) return;
+
+            setGlobalMessages((prev) => {
+                if (
+                    prev.some(
+                        (msg) =>
+                            Number(msg.id) ===
+                            Number(newMessage.id)
+                    )
+                ) {
+                    return prev;
+                }
+
+                return [
+                    ...prev,
+                    newMessage
+                ];
+            });
+        };
+
+        // ====================================================
         // MESSAGE MARQUÉ COMME LU
-        // -----------------------------------------------------
+        // ====================================================
 
         const handleMessagesMarkedRead = ({
             conversationId: msgConvId,
             readerId
         }) => {
+            const currentConversationId =
+                conversationIdRef.current;
+
+            const currentContact =
+                activeContactRef.current;
+
             if (
-                activeContact &&
-                Number(msgConvId) === Number(conversationId) &&
+                currentContact &&
+                Number(msgConvId) ===
+                    Number(currentConversationId) &&
                 Number(readerId) !== Number(myId)
             ) {
                 setChatHistory((prev) =>
-                    prev.map((msg) =>
-                        msg.status !== 'read' &&
-                        Number(
+                    prev.map((msg) => {
+                        const senderId =
                             msg.sender_id ||
-                            msg.senderId
-                        ) === Number(myId)
-                            ? {
-                                  ...msg,
-                                  status: 'read'
-                              }
-                            : msg
-                    )
+                            msg.senderId;
+
+                        if (
+                            msg.status !== 'read' &&
+                            Number(senderId) ===
+                                Number(myId)
+                        ) {
+                            return {
+                                ...msg,
+                                status: 'read'
+                            };
+                        }
+
+                        return msg;
+                    })
                 );
             }
         };
 
-        // -----------------------------------------------------
-        // UTILISATEUR EN TRAIN D'ÉCRIRE
-        // -----------------------------------------------------
+        // ====================================================
+        // TYPING
+        // ====================================================
 
         const handleUserTyping = ({
             conversationId: msgConvId,
             userId
         }) => {
+            const currentConversationId =
+                conversationIdRef.current;
+
+            const currentContact =
+                activeContactRef.current;
+
             if (
-                activeContact &&
-                Number(msgConvId) === Number(conversationId) &&
+                currentContact &&
+                Number(msgConvId) ===
+                    Number(currentConversationId) &&
                 Number(userId) !== Number(myId)
             ) {
                 setIsOtherTyping(true);
             }
         };
 
-        // -----------------------------------------------------
-        // UTILISATEUR ARRÊTE D'ÉCRIRE
-        // -----------------------------------------------------
+        // ====================================================
+        // STOP TYPING
+        // ====================================================
 
         const handleUserStopTyping = ({
             conversationId: msgConvId,
             userId
         }) => {
+            const currentConversationId =
+                conversationIdRef.current;
+
+            const currentContact =
+                activeContactRef.current;
+
             if (
-                activeContact &&
-                Number(msgConvId) === Number(conversationId) &&
+                currentContact &&
+                Number(msgConvId) ===
+                    Number(currentConversationId) &&
                 Number(userId) !== Number(myId)
             ) {
                 setIsOtherTyping(false);
             }
         };
 
-        // -----------------------------------------------------
+        // ====================================================
         // UTILISATEURS EN LIGNE
-        // -----------------------------------------------------
+        // ====================================================
 
         const handleOnlineUsers = (usersList) => {
             const ids = Array.isArray(usersList)
                 ? usersList.map((u) =>
                       typeof u === 'object'
-                          ? Number(
-                                u.userId || u.id
-                            )
+                          ? Number(u.userId || u.id)
                           : Number(u)
                   )
                 : [];
@@ -459,9 +624,9 @@ const ChatWindow = () => {
             setOnlineUsers(ids);
         };
 
-        // -----------------------------------------------------
-        // CHANGEMENT DE STATUT UTILISATEUR
-        // -----------------------------------------------------
+        // ====================================================
+        // STATUT UTILISATEUR
+        // ====================================================
 
         const handleUserStatusChange = ({
             userId,
@@ -482,30 +647,23 @@ const ChatWindow = () => {
             });
         };
 
-        // =====================================================
-        // ENREGISTREMENT DES EVENTS
-        // =====================================================
+        // ====================================================
+        // EVENTS SOCKET.IO
+        // ====================================================
 
         socket.on('connect', handleConnect);
-
-        socket.on(
-            'connect_error',
-            handleConnectError
-        );
-
-        socket.io.on(
-            'reconnect_attempt',
-            handleReconnectAttempt
-        );
-
-        socket.on(
-            'disconnect',
-            handleDisconnect
-        );
+        socket.on('connect_error', handleConnectError);
+        socket.io.on('reconnect_attempt', handleReconnectAttempt);
+        socket.on('disconnect', handleDisconnect);
 
         socket.on(
             'receive_message',
             handleReceiveMessage
+        );
+
+        socket.on(
+            'receive_global_message',
+            handleReceiveGlobalMessage
         );
 
         socket.on(
@@ -533,38 +691,31 @@ const ChatWindow = () => {
             handleUserStatusChange
         );
 
-        // =====================================================
+        // ====================================================
         // NETTOYAGE
-        // =====================================================
+        // ====================================================
 
         return () => {
             console.log(
                 "🧹 Nettoyage de la connexion Socket.IO"
             );
 
-            socket.off(
-                'connect',
-                handleConnect
-            );
-
-            socket.off(
-                'connect_error',
-                handleConnectError
-            );
-
+            socket.off('connect', handleConnect);
+            socket.off('connect_error', handleConnectError);
             socket.io.off(
                 'reconnect_attempt',
                 handleReconnectAttempt
             );
-
-            socket.off(
-                'disconnect',
-                handleDisconnect
-            );
+            socket.off('disconnect', handleDisconnect);
 
             socket.off(
                 'receive_message',
                 handleReceiveMessage
+            );
+
+            socket.off(
+                'receive_global_message',
+                handleReceiveGlobalMessage
             );
 
             socket.off(
@@ -600,9 +751,9 @@ const ChatWindow = () => {
         };
     }, [myId]);
 
-    // =========================================================
+    // ========================================================
     // RECHERCHE UTILISATEUR
-    // =========================================================
+    // ========================================================
 
     const handleSearchUser = async (e) => {
         e.preventDefault();
@@ -611,6 +762,7 @@ const ChatWindow = () => {
 
         setLoadingSearch(true);
         setSearchError('');
+        setSearchResults([]);
 
         try {
             const res =
@@ -619,35 +771,33 @@ const ChatWindow = () => {
                     searchQuery.trim()
                 );
 
-            let finalData =
-                res?.data ||
-                res?.data?.data ||
-                res ||
-                [];
+            let users = [];
 
-            if (
-                Array.isArray(finalData) &&
-                finalData.length > 0
-            ) {
-                const filteredUsers =
-                    finalData.filter(
-                        (user) =>
-                            Number(user.id) !==
-                            Number(myId)
-                    );
+            if (res?.user) {
+                users = Array.isArray(res.user)
+                    ? res.user
+                    : [res.user];
+            } else if (Array.isArray(res?.data)) {
+                users = res.data;
+            } else if (res?.data?.user) {
+                users = Array.isArray(res.data.user)
+                    ? res.data.user
+                    : [res.data.user];
+            }
 
-                if (filteredUsers.length === 0) {
-                    setSearchError(
-                        "C'est votre compte."
-                    );
-                } else {
-                    setSearchResults(
-                        filteredUsers
-                    );
-                }
-            } else {
+            const filteredUsers = users.filter(
+                (user) =>
+                    Number(user.id) !==
+                    Number(myId)
+            );
+
+            if (filteredUsers.length === 0) {
                 setSearchError(
-                    "Aucun utilisateur trouvé."
+                    "Aucun autre utilisateur trouvé."
+                );
+            } else {
+                setSearchResults(
+                    filteredUsers
                 );
             }
         } catch (error) {
@@ -664,59 +814,58 @@ const ChatWindow = () => {
         }
     };
 
-    // =========================================================
-    // OUVERTURE D'UNE CONVERSATION
-    // =========================================================
+    // ========================================================
+    // OUVERTURE CONVERSATION
+    // ========================================================
 
     const handleSelectContact = async (contact) => {
+        const oldConversationId =
+            conversationIdRef.current;
+
         if (
-            conversationId &&
+            oldConversationId &&
             socketRef.current?.connected
         ) {
             socketRef.current.emit(
                 'leave_conversation',
                 {
-                    conversationId
+                    conversationId:
+                        oldConversationId
                 }
             );
 
             socketRef.current.emit(
                 'stop_typing',
                 {
-                    conversationId,
+                    conversationId:
+                        oldConversationId,
                     userId: myId
                 }
             );
         }
 
         setActiveContact(contact);
+        activeContactRef.current = contact;
+
         setIsChatOpen(true);
         setLoadingHistory(true);
         setChatHistory([]);
         setSearchQuery('');
         setSearchResults([]);
+        setSearchError('');
         setIsOtherTyping(false);
         setTypedMessage('');
 
         if (textareaRef.current) {
-            textareaRef.current.style.height =
-                'auto';
+            textareaRef.current.style.height = 'auto';
         }
 
         setRecentChats((prev) => {
-            const exists = prev.some(
+            const filtered = prev.filter(
                 (c) =>
-                    Number(c.id) ===
+                    Number(c.id) !==
                     Number(contact.id)
             );
-
-            const filtered = exists
-                ? prev.filter(
-                      (c) =>
-                          Number(c.id) !==
-                          Number(contact.id)
-                  )
-                : prev;
 
             const updated = [
                 contact,
@@ -740,55 +889,46 @@ const ChatWindow = () => {
                     contact.id
                 );
 
-            if (convData.success) {
-                const convId =
-                    convData.conversationId;
+            if (!convData?.success) {
+                console.error(
+                    "❌ Impossible d'initialiser la conversation."
+                );
+                return;
+            }
 
-                setConversationId(convId);
+            const convId =
+                convData.conversationId;
 
-                /*
-                 * On vérifie que Socket.IO est bien connecté
-                 * avant d'envoyer les événements.
-                 */
-                if (
-                    socketRef.current?.connected
-                ) {
-                    socketRef.current.emit(
-                        'join_conversation',
-                        {
-                            conversationId:
-                                convId,
-                            userId: myId,
-                            contactId:
-                                contact.id
-                        }
-                    );
+            setConversationId(convId);
+            conversationIdRef.current = convId;
 
-                    socketRef.current.emit(
-                        'open_chat',
-                        {
-                            conversationId:
-                                convId,
-                            userId: myId
-                        }
-                    );
-                } else {
-                    console.warn(
-                        "⚠️ Socket non connecté au moment de l'ouverture de la conversation."
-                    );
-                }
+            if (socketRef.current?.connected) {
+                socketRef.current.emit(
+                    'join_conversation',
+                    {
+                        conversationId: convId
+                    }
+                );
+            } else {
+                console.warn(
+                    "⚠️ Socket non connecté au moment de l'ouverture de la conversation."
+                );
+            }
 
-                const historyData =
-                    await authApi.getChatHistory(
-                        token,
-                        convId
-                    );
+            const historyData =
+                await authApi.getChatHistory(
+                    token,
+                    convId
+                );
 
-                if (historyData.success) {
-                    setChatHistory(
-                        historyData.data || []
-                    );
-                }
+            if (historyData?.success) {
+                setChatHistory(
+                    Array.isArray(historyData.data)
+                        ? historyData.data
+                        : []
+                );
+            } else {
+                setChatHistory([]);
             }
         } catch (error) {
             console.error(
@@ -800,9 +940,9 @@ const ChatWindow = () => {
         }
     };
 
-    // =========================================================
-    // SAISIE DU MESSAGE
-    // =========================================================
+    // ========================================================
+    // SAISIE MESSAGE
+    // ========================================================
 
     const handleInputChange = (e) => {
         const value = e.target.value;
@@ -810,27 +950,23 @@ const ChatWindow = () => {
         setTypedMessage(value);
 
         if (textareaRef.current) {
-            textareaRef.current.style.height =
-                'auto';
-
+            textareaRef.current.style.height = 'auto';
             textareaRef.current.style.height =
                 `${textareaRef.current.scrollHeight}px`;
         }
 
         if (
-            !conversationId ||
+            !conversationIdRef.current ||
             !socketRef.current?.connected
         ) {
             return;
         }
 
-        socketRef.current.emit(
-            'typing',
-            {
-                conversationId,
-                userId: myId
-            }
-        );
+        socketRef.current.emit('typing', {
+            conversationId:
+                conversationIdRef.current,
+            userId: myId
+        });
 
         if (typingTimeoutRef.current) {
             clearTimeout(
@@ -838,25 +974,23 @@ const ChatWindow = () => {
             );
         }
 
-        typingTimeoutRef.current =
-            setTimeout(() => {
-                if (
-                    socketRef.current?.connected
-                ) {
-                    socketRef.current.emit(
-                        'stop_typing',
-                        {
-                            conversationId,
-                            userId: myId
-                        }
-                    );
-                }
-            }, 2000);
+        typingTimeoutRef.current = setTimeout(() => {
+            if (socketRef.current?.connected) {
+                socketRef.current.emit(
+                    'stop_typing',
+                    {
+                        conversationId:
+                            conversationIdRef.current,
+                        userId: myId
+                    }
+                );
+            }
+        }, 2000);
     };
 
-    // =========================================================
-    // TOUCHE ENTER
-    // =========================================================
+    // ========================================================
+    // ENTER
+    // ========================================================
 
     const handleKeyDown = (e) => {
         if (
@@ -868,23 +1002,21 @@ const ChatWindow = () => {
         }
     };
 
-    // =========================================================
-    // ENVOI DU MESSAGE
-    // =========================================================
+    // ========================================================
+    // ENVOI MESSAGE
+    // ========================================================
 
     const handleSendMessage = (e) => {
         e.preventDefault();
 
         if (
             !typedMessage.trim() ||
-            !conversationId
+            !conversationIdRef.current
         ) {
             return;
         }
 
-        if (
-            !socketRef.current?.connected
-        ) {
+        if (!socketRef.current?.connected) {
             console.error(
                 "❌ Impossible d'envoyer le message : Socket.IO n'est pas connecté."
             );
@@ -903,7 +1035,8 @@ const ChatWindow = () => {
         socketRef.current.emit(
             'stop_typing',
             {
-                conversationId,
+                conversationId:
+                    conversationIdRef.current,
                 userId: myId
             }
         );
@@ -912,7 +1045,7 @@ const ChatWindow = () => {
             'send_message',
             {
                 conversationId:
-                    conversationId,
+                    conversationIdRef.current,
                 senderId: myId,
                 text: messageText
             }
@@ -921,14 +1054,13 @@ const ChatWindow = () => {
         setTypedMessage('');
 
         if (textareaRef.current) {
-            textareaRef.current.style.height =
-                'auto';
+            textareaRef.current.style.height = 'auto';
         }
     };
 
-    // =========================================================
-    // STATUT DES MESSAGES
-    // =========================================================
+    // ========================================================
+    // STATUT
+    // ========================================================
 
     const renderStatusTicks = (status) => {
         if (status === 'read') {
@@ -963,6 +1095,10 @@ const ChatWindow = () => {
         onlineUsers.includes(
             Number(activeContact.id)
         );
+
+    // ========================================================
+    // RENDER
+    // ========================================================
 
     return (
         <div
@@ -1015,8 +1151,7 @@ const ChatWindow = () => {
                             </button>
                         </form>
 
-                        {searchResults.length >
-                            0 && (
+                        {searchResults.length > 0 && (
                             <div className="search-dropdown-overlay position-absolute start-0 w-100 mt-2 shadow rounded border">
                                 {searchResults.map(
                                     (user) => (
@@ -1057,81 +1192,73 @@ const ChatWindow = () => {
                 </div>
 
                 <div className="sidebar-list flex-grow-1 overflow-auto">
-                    {recentChats.length >
-                    0 ? (
-                        recentChats.map(
-                            (contact) => {
-                                const isContactOnline =
-                                    onlineUsers.includes(
+                    {recentChats.length > 0 ? (
+                        recentChats.map((contact) => {
+                            const isContactOnline =
+                                onlineUsers.includes(
+                                    Number(contact.id)
+                                );
+
+                            return (
+                                <div
+                                    key={contact.id}
+                                    className={`sidebar-chat-item d-flex align-items-center p-1 border-bottom ${
+                                        Number(
+                                            activeContact?.id
+                                        ) ===
                                         Number(
                                             contact.id
                                         )
-                                    );
-
-                                return (
-                                    <div
-                                        key={
-                                            contact.id
-                                        }
-                                        className={`sidebar-chat-item d-flex align-items-center p-1 border-bottom ${
-                                            Number(
-                                                activeContact?.id
-                                            ) ===
-                                            Number(
-                                                contact.id
-                                            )
-                                                ? 'active'
-                                                : ''
-                                        }`}
-                                        onClick={() =>
-                                            handleSelectContact(
-                                                contact
-                                            )
-                                        }
-                                    >
-                                        <div className="position-relative d-inline-block flex-shrink-0">
-                                            <div className="avatar-placeholder">
-                                                {contact.username?.charAt(
-                                                    0
-                                                ).toUpperCase()}
-                                            </div>
-
-                                            <span
-                                                className={`status-badge-dot ${
-                                                    isContactOnline
-                                                        ? 'online'
-                                                        : 'offline'
-                                                }`}
-                                            ></span>
+                                            ? 'active'
+                                            : ''
+                                    }`}
+                                    onClick={() =>
+                                        handleSelectContact(
+                                            contact
+                                        )
+                                    }
+                                >
+                                    <div className="position-relative d-inline-block flex-shrink-0">
+                                        <div className="avatar-placeholder">
+                                            {contact.username
+                                                ?.charAt(0)
+                                                .toUpperCase()}
                                         </div>
 
-                                        <div className="chat-item-info ms-3 flex-grow-1">
-                                            <div className="chat-item-name fw-semibold">
-                                                {
-                                                    contact.username
-                                                }
-                                            </div>
+                                        <span
+                                            className={`status-badge-dot ${
+                                                isContactOnline
+                                                    ? 'online'
+                                                    : 'offline'
+                                            }`}
+                                        ></span>
+                                    </div>
 
-                                            <div className="chat-item-sub small text-muted-custom">
-                                                {isContactOnline
-                                                    ? "En ligne"
-                                                    : "Hors ligne"}
-                                            </div>
+                                    <div className="chat-item-info ms-3 flex-grow-1">
+                                        <div className="chat-item-name fw-semibold">
+                                            {
+                                                contact.username
+                                            }
+                                        </div>
+
+                                        <div className="chat-item-sub small text-muted-custom">
+                                            {isContactOnline
+                                                ? "En ligne"
+                                                : "Hors ligne"}
                                         </div>
                                     </div>
-                                );
-                            }
-                        )
+                                </div>
+                            );
+                        })
                     ) : (
                         <div className="text-center p-4 text-muted-custom small">
-                            Aucune discussion
-                            en cours.
+                            Aucune discussion en cours.
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* MAIN SPACE */}
+            {/* ESPACE PRINCIPAL */}
 
             <div
                 className={`chat-main-space flex-grow-1 ${
@@ -1140,18 +1267,33 @@ const ChatWindow = () => {
                         : 'd-none d-md-flex'
                 }`}
             >
+                {/* HEADER */}
+
                 <div className="chat-main-header d-flex align-items-center justify-content-between px-3 border-bottom">
                     <div className="d-flex align-items-center">
                         {isChatOpen && (
                             <button
                                 className="btn-back-nav d-md-none me-3 shadow-none border-0 bg-transparent text-primary p-0"
                                 onClick={() => {
-                                    setIsChatOpen(
-                                        false
-                                    );
-                                    setActiveContact(
-                                        null
-                                    );
+                                    if (
+                                        conversationIdRef.current &&
+                                        socketRef.current?.connected
+                                    ) {
+                                        socketRef.current.emit(
+                                            'leave_conversation',
+                                            {
+                                                conversationId:
+                                                    conversationIdRef.current
+                                            }
+                                        );
+                                    }
+
+                                    setIsChatOpen(false);
+                                    setActiveContact(null);
+                                    activeContactRef.current = null;
+                                    setConversationId(null);
+                                    conversationIdRef.current = null;
+                                    setIsOtherTyping(false);
                                 }}
                             >
                                 ⬅️
@@ -1193,8 +1335,7 @@ const ChatWindow = () => {
                                 </div>
                             ) : (
                                 <strong className="fs-6">
-                                    Flux Global des
-                                    Messages
+                                    Flux Global des Messages
                                 </strong>
                             )}
                         </div>
@@ -1227,6 +1368,8 @@ const ChatWindow = () => {
                     )}
                 </div>
 
+                {/* ZONE DES MESSAGES */}
+
                 <div className="chat-history-viewport flex-grow-1 overflow-hidden d-flex flex-column">
                     {activeContact ? (
                         <div className="chat-messages-container d-flex flex-column h-100">
@@ -1235,79 +1378,64 @@ const ChatWindow = () => {
                                     <div className="chat-status-message text-center text-muted-custom small my-auto">
                                         Chargement...
                                     </div>
-                                ) : chatHistory.length >
-                                  0 ? (
-                                    chatHistory.map(
-                                        (msg) => {
-                                            const senderId =
-                                                msg.sender_id ||
-                                                msg.senderId;
+                                ) : chatHistory.length > 0 ? (
+                                    chatHistory.map((msg) => {
+                                        const senderId =
+                                            msg.sender_id ||
+                                            msg.senderId;
 
-                                            const isMe =
-                                                myId &&
-                                                senderId &&
-                                                Number(
-                                                    senderId
-                                                ) ===
-                                                    Number(
-                                                        myId
-                                                    );
+                                        const isMe =
+                                            myId &&
+                                            senderId &&
+                                            Number(senderId) ===
+                                                Number(myId);
 
-                                            return (
-                                                <div
-                                                    key={
-                                                        msg.id
-                                                    }
-                                                    className={`message-row ${
-                                                        isMe
-                                                            ? 'me'
-                                                            : 'other'
-                                                    }`}
-                                                >
-                                                    <div className="message-text-wrapper max-width-75">
-                                                        <p className="msg-body">
-                                                            {
-                                                                msg.text
-                                                            }
-                                                        </p>
+                                        return (
+                                            <div
+                                                key={msg.id}
+                                                className={`message-row ${
+                                                    isMe
+                                                        ? 'me'
+                                                        : 'other'
+                                                }`}
+                                            >
+                                                <div className="message-text-wrapper max-width-75">
+                                                    <p className="msg-body">
+                                                        {
+                                                            msg.text
+                                                        }
+                                                    </p>
 
-                                                        <div className="msg-meta-block extra-small">
-                                                            <span className="msg-meta">
-                                                                {new Date(
-                                                                    msg.created_at ||
-                                                                        msg.createdAt
-                                                                ).toLocaleTimeString(
-                                                                    [],
-                                                                    {
-                                                                        hour: '2-digit',
-                                                                        minute: '2-digit'
-                                                                    }
-                                                                )}
-                                                            </span>
+                                                    <div className="msg-meta-block extra-small">
+                                                        <span className="msg-meta">
+                                                            {new Date(
+                                                                msg.created_at ||
+                                                                    msg.createdAt
+                                                            ).toLocaleTimeString(
+                                                                [],
+                                                                {
+                                                                    hour: '2-digit',
+                                                                    minute: '2-digit'
+                                                                }
+                                                            )}
+                                                        </span>
 
-                                                            {isMe &&
-                                                                renderStatusTicks(
-                                                                    msg.status
-                                                                )}
-                                                        </div>
+                                                        {isMe &&
+                                                            renderStatusTicks(
+                                                                msg.status
+                                                            )}
                                                     </div>
                                                 </div>
-                                            );
-                                        }
-                                    )
+                                            </div>
+                                        );
+                                    })
                                 ) : (
                                     <div className="chat-status-message text-center text-muted-custom small my-auto">
-                                        Canal sécurisé
-                                        initialisé. Dites
-                                        bonjour !
+                                        Canal sécurisé initialisé. Dites bonjour !
                                     </div>
                                 )}
 
-                                <div
-                                    ref={
-                                        messagesEndRef
-                                    }
-                                />
+                                <div ref={messagesEndRef} />
                             </div>
 
                             <div className="chat-input-dock p-3 border-top">
@@ -1375,89 +1503,87 @@ const ChatWindow = () => {
                             <div className="messages-flow flex-grow-1 overflow-auto p-3 d-flex flex-column gap-3">
                                 {loadingGlobal ? (
                                     <div className="chat-status-message text-center text-muted-custom small my-auto">
-                                        Synchronisation du
-                                        flux général...
+                                        Synchronisation du flux général...
                                     </div>
-                                ) : globalMessages.length >
-                                  0 ? (
-                                    globalMessages.map(
-                                        (msg) => {
-                                            const senderId =
-                                                msg.sender_id ||
-                                                msg.senderId;
+                                ) : globalMessages.length > 0 ? (
+                                    globalMessages.map((msg) => {
+                                        const senderId =
+                                            msg.sender_id ||
+                                            msg.senderId;
 
-                                            const isMe =
-                                                myId &&
-                                                senderId &&
-                                                Number(
-                                                    senderId
-                                                ) ===
-                                                    Number(
-                                                        myId
-                                                    );
+                                        const isMe =
+                                            myId &&
+                                            senderId &&
+                                            Number(senderId) ===
+                                                Number(myId);
 
-                                            const displayName =
-                                                isMe
-                                                    ? "Moi"
-                                                    : msg.sender_username ||
-                                                      msg.username ||
-                                                      `Utilisateur #${senderId}`;
+                                        /*
+                                         * Le nom est maintenant
+                                         * directement récupéré depuis
+                                         * sender_name.
+                                         *
+                                         * Le fallback protège aussi
+                                         * l'affichage si un ancien
+                                         * message ne possède pas encore
+                                         * cette propriété.
+                                         */
 
-                                            return (
-                                                <div
-                                                    key={
-                                                        msg.id
-                                                    }
-                                                    className={`message-row ${
-                                                        isMe
-                                                            ? 'me'
-                                                            : 'other'
-                                                    }`}
-                                                >
-                                                    <div className="message-text-wrapper max-width-75">
-                                                        <span className="global-sender-tag extra-small fw-bold mb-1 d-block">
+                                        const displayName =
+                                            isMe
+                                                ? "Moi"
+                                                : msg.sender_name ||
+                                                  msg.senderName ||
+                                                  msg.sender_username ||
+                                                  msg.username ||
+                                                  `Utilisateur #${senderId}`;
+
+                                        return (
+                                            <div
+                                                key={
+                                                    msg.id
+                                                }
+                                                className={`message-row ${
+                                                    isMe
+                                                        ? 'me'
+                                                        : 'other'
+                                                }`}
+                                            >
+                                                <div className="message-text-wrapper max-width-75">
+                                                    <span className="global-sender-tag extra-small fw-bold mb-1 d-block">
+                                                        {
+                                                            displayName
+                                                        }
+                                                    </span>
+
+                                                    <p className="msg-body">
+                                                        {
+                                                            msg.text
+                                                        }
+                                                    </p>
+
+                                                    <span className="msg-meta extra-small text-muted-custom">
+                                                        {new Date(
+                                                            msg.created_at ||
+                                                                msg.createdAt
+                                                        ).toLocaleTimeString(
+                                                            [],
                                                             {
-                                                                displayName
+                                                                hour: '2-digit',
+                                                                minute: '2-digit'
                                                             }
-                                                        </span>
-
-                                                        <p className="msg-body">
-                                                            {
-                                                                msg.text
-                                                            }
-                                                        </p>
-
-                                                        <span className="msg-meta extra-small text-muted-custom">
-                                                            {new Date(
-                                                                msg.created_at ||
-                                                                    msg.createdAt
-                                                            ).toLocaleTimeString(
-                                                                [],
-                                                                {
-                                                                    hour: '2-digit',
-                                                                    minute: '2-digit'
-                                                                }
-                                                            )}
-                                                        </span>
-                                                    </div>
+                                                        )}
+                                                    </span>
                                                 </div>
-                                            );
-                                        }
-                                    )
+                                            </div>
+                                        );
+                                    })
                                 ) : (
                                     <div className="chat-status-message text-center text-muted-custom small my-auto">
-                                        Aucun message
-                                        dans votre boîte
-                                        de réception pour
-                                        le moment.
+                                        Aucun message dans votre boîte de réception pour le moment.
                                     </div>
                                 )}
 
-                                <div
-                                    ref={
-                                        messagesEndRef
-                                    }
-                                />
+                                <div ref={messagesEndRef} />
                             </div>
                         </div>
                     )}
@@ -1468,3 +1594,4 @@ const ChatWindow = () => {
 };
 
 export default ChatWindow;
+
