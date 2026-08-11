@@ -7,8 +7,8 @@ import './ChatWindow.css';
 
 // URL de l'API REST
 const API_URL =
-    import.meta.env.VITE_API_URL ||
-    "http://localhost:5000/api/with-god";
+    import.meta.env.VITE_API_WEBSOCKET ||
+    "http://localhost:5000";
 
 // URL dédiée à Socket.IO
 // En production : https://backend-with-god.onrender.com
